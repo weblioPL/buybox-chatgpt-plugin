@@ -5,6 +5,8 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
+
 // Funkcja pobiera poprawny ISBN_13 z pierwszego wyniku Google Books API
 async function searchEANOnline(productName, authorName = '') {
   const query = encodeURIComponent(`${productName} ${authorName}`);
