@@ -3,10 +3,8 @@ info:
   title: BUY.BOX Zakupy
   description: Wyszukaj książki po nazwie i zobacz gdzie je kupić
   version: "1.0.0"
-
 servers:
   - url: https://buybox-plugin.onrender.com
-
 paths:
   /get-offers:
     post:
