@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "BUY.BOX Zakupy",
+  "name_for_model": "buybox",
+  "description_for_human": "Wyszukaj książki po nazwie i zobacz gdzie je kupić",
+  "description_for_model": "Użyj tego pluginu, aby znaleźć książkę i uzyskać listę ofert",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://buybox-plugin.onrender.com/openapi.yaml"
+  },
+  "logo_url": "https://yourdomain.com/logo.png",
+  "contact_email": "kontakt@yourdomain.com",
+  "legal_info_url": "https://yourdomain.com/regulamin"
+}
