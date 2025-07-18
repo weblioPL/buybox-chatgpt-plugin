@@ -1,22 +1,28 @@
-const express = require('express');
-const path = require('path');
-const axios = require('axios');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import axios from 'axios';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Zamiennik __dirname w ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json());
 
-// Serwowanie katalogu .well-known
+// Serwowanie statycznych plików
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
+app.use('/', express.static(__dirname));
 
-// Endpoint do openapi.yaml z nagłówkiem Content-Type
+// Endpoint dla openapi.yaml
 app.get('/openapi.yaml', (req, res) => {
   res.setHeader('Content-Type', 'application/yaml');
   res.sendFile(path.join(__dirname, 'openapi.yaml'));
 });
 
-// Szukanie EAN w Google Books
+// Szukanie EAN z Google Books
 async function searchEANOnline(productName, authorName = '') {
   const query = encodeURIComponent(`${productName} ${authorName}`);
   const url = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
@@ -26,50 +32,46 @@ async function searchEANOnline(productName, authorName = '') {
     const items = response.data.items || [];
 
     for (const item of items) {
-      const title = item.volumeInfo?.title?.toLowerCase() || '';
-      const authors = item.volumeInfo?.authors?.join(', ').toLowerCase() || '';
-
-      if (title.includes(productName.toLowerCase()) && authors.includes(authorName.toLowerCase())) {
-        const identifiers = item.volumeInfo.industryIdentifiers || [];
-        const isbn13 = identifiers.find(id => id.type === 'ISBN_13');
-        if (isbn13) return isbn13.identifier;
+      const industryIdentifiers = item.volumeInfo?.industryIdentifiers || [];
+      for (const id of industryIdentifiers) {
+        if (id.type === 'EAN_13' || id.type === 'ISBN_13') {
+          return id.identifier;
+        }
       }
     }
-
-    return null;
   } catch (err) {
-    console.error('Błąd podczas szukania EAN:', err);
-    return null;
+    console.error('Błąd przy szukaniu EAN:', err.message);
   }
+
+  return null;
 }
 
-// Endpoint do pobierania ofert z BUY.BOX API
+// Endpoint do pobierania ofert
 app.post('/get-offers', async (req, res) => {
-  const { product_name, author_name = '' } = req.body;
-
-  if (!product_name) {
-    return res.status(400).json({ error: 'Brakuje pola "product_name"' });
-  }
+  const { product_name, author_name } = req.body;
 
   const ean = await searchEANOnline(product_name, author_name);
 
   if (!ean) {
-    return res.status(404).json({ error: 'Nie znaleziono EAN dla podanej książki' });
+    return res.status(404).json({ error: 'Nie znaleziono EAN' });
   }
 
   try {
-    const buyboxRes = await axios.get(`https://buybox.click/21347/buybox.json?number=${ean}&p1=chatgpt`);
-    res.json({ ean, offers: buyboxRes.data.offers || [] });
+    const apiUrl = `https://buybox.click/21347/buybox.json?number=${ean}&p1=chatgpt`;
+    const response = await axios.get(apiUrl);
+
+    const offers = response.data?.offers || [];
+
+    res.json({
+      ean,
+      offers,
+    });
   } catch (err) {
-    console.error('Błąd przy pobieraniu ofert z BUY.BOX:', err);
-    res.status(500).json({ error: 'Błąd przy pobieraniu ofert z BUY.BOX' });
+    console.error('Błąd przy pobieraniu danych z BUY.BOX:', err.message);
+    res.status(500).json({ error: 'Błąd po stronie serwera' });
   }
 });
 
-// Serwowanie pozostałych plików statycznych (NA KOŃCU)
-app.use('/', express.static(__dirname));
-
-// Start serwera
 app.listen(port, () => {
   console.log(`Serwer działa na porcie ${port}`);
 });
