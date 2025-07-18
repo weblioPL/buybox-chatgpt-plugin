@@ -1,15 +1,22 @@
 const express = require('express');
 const fetch = require('node-fetch');
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
-const path = require('path');
 
 app.use(express.json());
 
+// Serwowanie statycznych plików
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
 app.use('/', express.static(__dirname));
 
-// Funkcja pobiera poprawny ISBN_13 z pierwszego wyniku Google Books API
+// Endpoint dla openapi.yaml
+app.get('/openapi.yaml', (req, res) => {
+  res.setHeader('Content-Type', 'application/yaml');
+  res.sendFile(path.join(__dirname, 'openapi.yaml'));
+});
+
+// Szukanie EAN z Google Books
 async function searchEANOnline(productName, authorName = '') {
   const query = encodeURIComponent(`${productName} ${authorName}`);
   const url = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
@@ -30,7 +37,7 @@ async function searchEANOnline(productName, authorName = '') {
   }
 }
 
-// Funkcja pobiera oferty z BUY.BOX API
+// Pobieranie ofert z BUY.BOX
 async function fetchOffersByEAN(ean) {
   const url = `https://buybox.click/21347/buybox.json?number=${ean}&p1=chatgpt`;
 
@@ -39,8 +46,6 @@ async function fetchOffersByEAN(ean) {
     if (!response.ok) throw new Error('Błąd pobierania danych z BUY.BOX API');
 
     const data = await response.json();
-
-    // Zamiana obiektu ofert na tablicę, jeśli trzeba
     const offers = data.offers
       ? Array.isArray(data.offers)
         ? data.offers
@@ -71,26 +76,7 @@ app.post('/get-offers', async (req, res) => {
   res.json({ ean, offers });
 });
 
-const mime = require('mime');
-
-const express = require('express');
-const app = express();
-const path = require('path');
-
-// ... Twoje inne endpointy i middleware
-
-app.get('/openapi.yaml', (req, res) => {
-  res.setHeader('Content-Type', 'application/yaml');
-  res.sendFile(path.join(__dirname, 'openapi.yaml'));
-});
-
-app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
-
-// uruchom serwer
-app.listen(process.env.PORT || 3000, () => {
-  console.log('Server started');
-});
-
+// Start serwera
 app.listen(port, () => {
   console.log(`BUY.BOX Plugin API listening on port ${port}`);
 });
