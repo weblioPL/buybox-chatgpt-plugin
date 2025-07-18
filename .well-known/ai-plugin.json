@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "BUY.BOX Zakupy",
+  "name_for_model": "buybox_plugin",
+  "description_for_human": "Wyszukuj oferty produktów w polskich sklepach po nazwie książki lub produktu.",
+  "description_for_model": "Podaj nazwę książki lub produktu, a plugin znajdzie EAN i pobierze oferty z polskich sklepów.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://buybox-chatgpt-plugin.onrender.com/openapi.yaml"
+  },
+  "logo_url": "https://buybox-chatgpt-plugin.onrender.com/public/logo.png",
+  "contact_email": "support@buybox.pl",
+  "legal_info_url": "https://buybox.pl/regulamin"
+}
