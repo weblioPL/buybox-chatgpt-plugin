@@ -71,6 +71,14 @@ app.post('/get-offers', async (req, res) => {
   res.json({ ean, offers });
 });
 
+const mime = require('mime');
+
+// wymuszenie Content-Type
+app.get('/openapi.yaml', (req, res) => {
+  res.type(mime.getType('yaml')); // 'application/x-yaml' lub 'text/yaml'
+  res.sendFile(path.join(__dirname, 'openapi.yaml'));
+});
+
 app.listen(port, () => {
   console.log(`BUY.BOX Plugin API listening on port ${port}`);
 });
