@@ -21,13 +21,12 @@ paths:
               properties:
                 product_name:
                   type: string
-                  description: Nazwa produktu (np. tytuł książki)
-                author:
-                  type: string
-                  description: Autor książki (opcjonalnie)
+                  description: Nazwa książki
+              required:
+                - product_name
       responses:
         '200':
-          description: Lista ofert z BUY.BOX
+          description: OK
           content:
             application/json:
               schema:
@@ -36,4 +35,6 @@ paths:
                   ean:
                     type: string
                   offers:
-                    type: object
+                    type: array
+                    items:
+                      type: object
