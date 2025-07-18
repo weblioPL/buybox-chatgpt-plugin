@@ -73,10 +73,22 @@ app.post('/get-offers', async (req, res) => {
 
 const mime = require('mime');
 
-// wymuszenie Content-Type
+const express = require('express');
+const app = express();
+const path = require('path');
+
+// ... Twoje inne endpointy i middleware
+
 app.get('/openapi.yaml', (req, res) => {
-  res.type(mime.getType('yaml')); // 'application/x-yaml' lub 'text/yaml'
+  res.setHeader('Content-Type', 'application/yaml');
   res.sendFile(path.join(__dirname, 'openapi.yaml'));
+});
+
+app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
+
+// uruchom serwer
+app.listen(process.env.PORT || 3000, () => {
+  console.log('Server started');
 });
 
 app.listen(port, () => {
