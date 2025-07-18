@@ -1,0 +1,45 @@
+openapi: 3.0.1
+info:
+  title: BUY.BOX Plugin API
+  description: API do wyszukiwania ofert produktów po nazwie
+  version: "1.0.0"
+servers:
+  - url: https://buybox-chatgpt-plugin.onrender.com
+paths:
+  /get-offers:
+    post:
+      operationId: getOffers
+      summary: Znajdź oferty produktu po nazwie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_name:
+                  type: string
+                  example: Atomowe nawyki
+      responses:
+        "200":
+          description: Lista ofert
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ean:
+                    type: string
+                  offers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        shop:
+                          type: string
+                        price:
+                          type: string
+                        format:
+                          type: string
+                        url:
+                          type: string
