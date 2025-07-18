@@ -11,7 +11,7 @@
     "type": "openapi",
     "url": "https://buybox-plugin.onrender.com/openapi.yaml"
   },
-  "logo_url": "https://yourdomain.com/logo.png",
-  "contact_email": "kontakt@yourdomain.com",
-  "legal_info_url": "https://yourdomain.com/regulamin"
+  "logo_url": "https://getbuybox.com/wp-content/uploads/2023/11/logo.png",
+  "contact_email": "hello@buybox.pl",
+  "legal_info_url": "https://getbuybox.com/regulamin/"
 }
