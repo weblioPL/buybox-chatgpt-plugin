@@ -1,3 +1,7 @@
+// Plugin do ChatGPT – backend w Node.js (Express)
+// Endpoint: /get-offers
+// Przetwarza nazwę produktu i autora, szuka EAN w Google Books API, zwraca oferty z BUY.BOX
+
 const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
@@ -5,7 +9,6 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Funkcja do pobrania EAN z Google Books API
 async function searchEANOnline(productName, authorName = '') {
   const query = encodeURIComponent(productName);
   const url = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
@@ -17,17 +20,18 @@ async function searchEANOnline(productName, authorName = '') {
     const data = await response.json();
     if (!data.items || data.items.length === 0) return null;
 
-    // Szukamy najlepszego dopasowania
+    // Lepsze dopasowanie: porównujemy dokładnie tytuł i autora
     const match = data.items.find(item => {
       const volume = item.volumeInfo;
-      const titleMatch = volume.title?.toLowerCase().includes(productName.toLowerCase());
-      const authorMatch = authorName
-        ? volume.authors?.some(a => a.toLowerCase().includes(authorName.toLowerCase()))
-        : true;
-      return titleMatch && authorMatch;
+      const title = volume.title?.toLowerCase().trim();
+      const authorList = volume.authors?.map(a => a.toLowerCase().trim()) || [];
+      return (
+        title === productName.toLowerCase().trim() &&
+        (!authorName || authorList.includes(authorName.toLowerCase().trim()))
+      );
     });
 
-    const correctItem = match || data.items[0]; // fallback: pierwszy wynik
+    const correctItem = match || data.items[0]; // fallback
 
     const isbn13 = correctItem?.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13');
     return isbn13?.identifier || null;
@@ -37,7 +41,6 @@ async function searchEANOnline(productName, authorName = '') {
   }
 }
 
-// Funkcja do pobrania ofert z BUY.BOX
 async function fetchOffersByEAN(ean) {
   const url = `https://buybox.click/21347/buybox.json?number=${ean}&p1=chatgpt`;
 
@@ -46,14 +49,13 @@ async function fetchOffersByEAN(ean) {
     if (!response.ok) throw new Error('Błąd pobierania danych z BUY.BOX API');
 
     const data = await response.json();
-    return data?.data || [];
+    return data.offers || {};
   } catch (error) {
-    console.error('Błąd podczas pobierania ofert z BUY.BOX:', error);
-    return [];
+    console.error('Błąd:', error);
+    return {};
   }
 }
 
-// Endpoint POST /get-offers
 app.post('/get-offers', async (req, res) => {
   const { product_name, author } = req.body;
 
