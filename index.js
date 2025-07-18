@@ -18,10 +18,21 @@ async function searchEANOnline(productName) {
     if (!response.ok) throw new Error('Błąd pobierania danych z Google Books API');
 
     const data = await response.json();
-    const firstItem = data.items?.[0];
-    const industryIdentifiers = firstItem?.volumeInfo?.industryIdentifiers;
 
-    const isbn13 = industryIdentifiers?.find(id => id.type === 'ISBN_13');
+    // Spróbuj dopasować po tytule i autorze
+    let correctItem = data.items?.find(item =>
+      item.volumeInfo?.title?.toLowerCase().includes(productName.toLowerCase()) &&
+      item.volumeInfo?.authors?.some(author => author.toLowerCase().includes('james clear'))
+    );
+
+    // Fallback: weź pierwszy z ISBN_13 jeśli brak pełnego dopasowania
+    if (!correctItem) {
+      correctItem = data.items?.find(item =>
+        item.volumeInfo?.industryIdentifiers?.some(id => id.type === 'ISBN_13')
+      );
+    }
+
+    const isbn13 = correctItem?.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13');
     return isbn13?.identifier || null;
   } catch (error) {
     console.error('Błąd podczas szukania EAN:', error);
