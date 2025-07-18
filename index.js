@@ -1,7 +1,3 @@
-// Plugin do ChatGPT – backend w Node.js (Express)
-// Endpoint: /get-offers
-// Przetwarza nazwę produktu, szuka EAN w sieci (Google Books API), zwraca oferty z BUY.BOX
-
 const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
@@ -9,32 +5,29 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-async function searchEANOnline(productName, author = null) {
+// Funkcja do pobrania EAN z Google Books API
+async function searchEANOnline(productName, authorName = '') {
   const query = encodeURIComponent(productName);
   const url = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
 
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error('Błąd pobierania danych z Google Books API');
-    const data = await response.json();
 
+    const data = await response.json();
     if (!data.items || data.items.length === 0) return null;
 
-    // Jeśli jest podany autor, filtrujemy dokładniej
-    let correctItem = data.items.find(item => {
-      const titleMatch = item.volumeInfo?.title?.toLowerCase().includes(productName.toLowerCase());
-      const authorMatch = author
-        ? item.volumeInfo?.authors?.some(a => a.toLowerCase().includes(author.toLowerCase()))
+    // Szukamy najlepszego dopasowania
+    const match = data.items.find(item => {
+      const volume = item.volumeInfo;
+      const titleMatch = volume.title?.toLowerCase().includes(productName.toLowerCase());
+      const authorMatch = authorName
+        ? volume.authors?.some(a => a.toLowerCase().includes(authorName.toLowerCase()))
         : true;
       return titleMatch && authorMatch;
     });
 
-    // Jeśli nie znaleziono, bierz pierwszy z ISBN_13
-    if (!correctItem) {
-      correctItem = data.items.find(item =>
-        item.volumeInfo?.industryIdentifiers?.some(id => id.type === 'ISBN_13')
-      );
-    }
+    const correctItem = match || data.items[0]; // fallback: pierwszy wynik
 
     const isbn13 = correctItem?.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13');
     return isbn13?.identifier || null;
@@ -44,6 +37,7 @@ async function searchEANOnline(productName, author = null) {
   }
 }
 
+// Funkcja do pobrania ofert z BUY.BOX
 async function fetchOffersByEAN(ean) {
   const url = `https://buybox.click/21347/buybox.json?number=${ean}&p1=chatgpt`;
 
@@ -52,13 +46,14 @@ async function fetchOffersByEAN(ean) {
     if (!response.ok) throw new Error('Błąd pobierania danych z BUY.BOX API');
 
     const data = await response.json();
-    return data.offers || [];
+    return data?.data || [];
   } catch (error) {
-    console.error('Błąd pobierania ofert z BUY.BOX API:', error);
+    console.error('Błąd podczas pobierania ofert z BUY.BOX:', error);
     return [];
   }
 }
 
+// Endpoint POST /get-offers
 app.post('/get-offers', async (req, res) => {
   const { product_name, author } = req.body;
 
