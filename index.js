@@ -19,20 +19,13 @@ async function searchEANOnline(productName) {
 
     const data = await response.json();
 
-    // Spróbuj dopasować po tytule i autorze
-    let correctItem = data.items?.find(item =>
+    // Szukaj najlepszego dopasowania po tytule
+    const match = data.items?.find(item =>
       item.volumeInfo?.title?.toLowerCase().includes(productName.toLowerCase()) &&
-      item.volumeInfo?.authors?.some(author => author.toLowerCase().includes('james clear'))
+      item.volumeInfo?.industryIdentifiers?.some(id => id.type === 'ISBN_13')
     );
 
-    // Fallback: weź pierwszy z ISBN_13 jeśli brak pełnego dopasowania
-    if (!correctItem) {
-      correctItem = data.items?.find(item =>
-        item.volumeInfo?.industryIdentifiers?.some(id => id.type === 'ISBN_13')
-      );
-    }
-
-    const isbn13 = correctItem?.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13');
+    const isbn13 = match?.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13');
     return isbn13?.identifier || null;
   } catch (error) {
     console.error('Błąd podczas szukania EAN:', error);
@@ -45,12 +38,14 @@ async function fetchOffersByEAN(ean) {
 
   try {
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Błąd pobierania danych z BUY.BOX API');
+    const raw = await response.text();
+    console.log('Odpowiedź BUY.BOX:', raw);
 
-    const data = await response.json();
+    if (!response.ok) throw new Error('Błąd pobierania danych z BUY.BOX API');
+    const data = JSON.parse(raw);
     return data.offers || [];
   } catch (error) {
-    console.error('Błąd:', error);
+    console.error('Błąd BUY.BOX:', error);
     return [];
   }
 }
