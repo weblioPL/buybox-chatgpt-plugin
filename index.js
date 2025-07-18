@@ -7,6 +7,7 @@ const path = require('path');
 app.use(express.json());
 
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
+app.use('/', express.static(__dirname));
 
 // Funkcja pobiera poprawny ISBN_13 z pierwszego wyniku Google Books API
 async function searchEANOnline(productName, authorName = '') {
