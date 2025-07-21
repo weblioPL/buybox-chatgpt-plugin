@@ -1,14 +1,7 @@
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import axios from 'axios';
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Zamiennik __dirname w ES Modules
 const express = require('express');
 const path = require('path');
+const axios = require('axios');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -17,7 +10,7 @@ app.use(express.json());
 // Serwowanie .well-known/ai-plugin.json
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
 
-// Serwowanie pliku openapi.yaml z poprawnym Content-Type
+// Serwowanie openapi.yaml z nagłówkiem Content-Type
 app.get('/openapi.yaml', (req, res) => {
   res.setHeader('Content-Type', 'text/yaml');
   res.sendFile(path.join(__dirname, 'openapi.yaml'), (err) => {
@@ -28,24 +21,7 @@ app.get('/openapi.yaml', (req, res) => {
   });
 });
 
-// Endpoint API (opcjonalnie, jeśli chcesz mieć działający plugin)
-app.post('/get-offers', (req, res) => {
-  const { product_name } = req.body;
-  if (!product_name) {
-    return res.status(400).json({ error: 'Brak product_name' });
-  }
-  // Możesz tu dodać logikę do Google Books lub własnego źródła
-  res.json({
-    ean: '1234567890123',
-    offers: [],
-  });
-});
-
-app.listen(port, () => {
-  console.log(`Serwer działa na porcie ${port}`);
-});
-
-// Szukanie EAN z Google Books
+// Pobieranie EAN z Google Books
 async function searchEANOnline(productName, authorName = '') {
   const query = encodeURIComponent(`${productName} ${authorName}`);
   const url = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
@@ -82,7 +58,6 @@ app.post('/get-offers', async (req, res) => {
   try {
     const apiUrl = `https://buybox.click/21347/buybox.json?number=${ean}&p1=chatgpt`;
     const response = await axios.get(apiUrl);
-
     const offers = response.data?.offers || [];
 
     res.json({
