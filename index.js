@@ -7,24 +7,42 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Zamiennik __dirname w ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+const path = require('path');
+const app = express();
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Serwowanie statycznych plików
+// Serwowanie .well-known/ai-plugin.json
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
-app.use('/', express.static(__dirname));
 
-// Endpoint dla openapi.yaml
+// Serwowanie pliku openapi.yaml z poprawnym Content-Type
 app.get('/openapi.yaml', (req, res) => {
-  res.setHeader('Content-Type', 'text/yaml'); // 👈 To konieczne!
-  res.sendFile(path.join(__dirname, 'openapi.yaml'), err => {
+  res.setHeader('Content-Type', 'text/yaml');
+  res.sendFile(path.join(__dirname, 'openapi.yaml'), (err) => {
     if (err) {
       console.error('Błąd przy wysyłaniu openapi.yaml:', err);
-      res.status(err.status).end();
+      res.status(500).send('Błąd przy ładowaniu specyfikacji');
     }
   });
+});
+
+// Endpoint API (opcjonalnie, jeśli chcesz mieć działający plugin)
+app.post('/get-offers', (req, res) => {
+  const { product_name } = req.body;
+  if (!product_name) {
+    return res.status(400).json({ error: 'Brak product_name' });
+  }
+  // Możesz tu dodać logikę do Google Books lub własnego źródła
+  res.json({
+    ean: '1234567890123',
+    offers: [],
+  });
+});
+
+app.listen(port, () => {
+  console.log(`Serwer działa na porcie ${port}`);
 });
 
 // Szukanie EAN z Google Books
