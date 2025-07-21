@@ -18,7 +18,7 @@ app.use('/', express.static(__dirname));
 
 // Endpoint dla openapi.yaml z poprawnym Content-Type
 app.get('/openapi.yaml', (req, res) => {
-  res.setHeader('Content-Type', 'application/yaml');
+  res.setHeader('Content-Type', 'application/x-yaml');
   res.sendFile(path.join(__dirname, 'openapi.yaml'));
 });
 
