@@ -18,8 +18,13 @@ app.use('/', express.static(__dirname));
 
 // Endpoint dla openapi.yaml
 app.get('/openapi.yaml', (req, res) => {
-  res.setHeader('Content-Type', 'application/x-yaml');
-  res.sendFile(path.join(__dirname, 'openapi.yaml'));
+  res.setHeader('Content-Type', 'text/yaml'); // 👈 To konieczne!
+  res.sendFile(path.join(__dirname, 'openapi.yaml'), err => {
+    if (err) {
+      console.error('Błąd przy wysyłaniu openapi.yaml:', err);
+      res.status(err.status).end();
+    }
+  });
 });
 
 // Szukanie EAN z Google Books
