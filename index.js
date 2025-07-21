@@ -1,42 +1,48 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import axios from 'axios';
+import { dirname } from 'path';
+import fetch from 'node-fetch';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Serwowanie statycznych plików
+// Serwowanie statycznych plików (np. ai-plugin.json)
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
 app.use('/', express.static(__dirname));
 
-// Poprawne serwowanie openapi.yaml z nagłówkiem Content-Type
+// Endpoint dla openapi.yaml z poprawnym Content-Type
 app.get('/openapi.yaml', (req, res) => {
   res.setHeader('Content-Type', 'application/yaml');
   res.sendFile(path.join(__dirname, 'openapi.yaml'));
 });
 
-// Szukanie EAN w Google Books
+// Przykładowy endpoint (jeśli używasz np. do wyszukiwania książek)
 app.post('/get-offers', async (req, res) => {
   const { product_name } = req.body;
 
+  if (!product_name) {
+    return res.status(400).json({ error: 'Brakuje pola product_name' });
+  }
+
+  // Prosty fetch do Google Books API (jeśli nadal chcesz używać)
+  const query = encodeURIComponent(product_name);
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
+
   try {
-    const query = encodeURIComponent(product_name);
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
-    const { data } = await axios.get(url);
+    const response = await fetch(url);
+    const data = await response.json();
 
-    const ean = data?.items?.[0]?.volumeInfo?.industryIdentifiers?.[0]?.identifier || '';
-    const offers = [];
+    const ean = data?.items?.[0]?.volumeInfo?.industryIdentifiers?.find(id => id.type === 'EAN_13')?.identifier;
 
-    res.json({ ean, offers });
-  } catch (error) {
-    console.error('Błąd podczas pobierania danych:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.json({ ean, offers: [] }); // placeholder
+  } catch (err) {
+    res.status(500).json({ error: 'Błąd podczas wyszukiwania EAN' });
   }
 });
 
