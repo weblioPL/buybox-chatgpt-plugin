@@ -1,38 +1,25 @@
 import express from 'express';
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-const app = express();
-const port = process.env.PORT || 10000;
+import { dirname } from 'path';
+import fetch from 'node-fetch';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
-// Middleware: JSON parsing
+const app = express();
+const port = process.env.PORT || 3000;
+
 app.use(express.json());
 
-// Endpoint do testów (opcjonalny)
-app.get('/', (req, res) => {
-  res.send('BUY.BOX Plugin działa 🚀');
-});
+// Serwowanie statycznych plików (np. ai-plugin.json)
+app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
+app.use('/', express.static(__dirname));
 
-// Serwowanie openapi.yaml z poprawnym Content-Type
+// Endpoint dla openapi.yaml z poprawnym Content-Type
 app.get('/openapi.yaml', (req, res) => {
-  const yamlPath = path.join(__dirname, 'openapi.yaml');
-
-  fs.readFile(yamlPath, 'utf8', (err, data) => {
-    if (err) {
-      res.status(500).send('Błąd podczas czytania openapi.yaml');
-    } else {
-      res.setHeader('Content-Type', 'text/yaml');
-      res.send(data);
-    }
-  });
-});
-
-app.listen(port, () => {
-  console.log(`✅ Serwer działa na porcie ${port}`);
+  res.setHeader('Content-Type', 'application/yaml');
+  res.sendFile(path.join(__dirname, 'openapi.yaml'));
 });
 
 // Przykładowy endpoint (jeśli używasz np. do wyszukiwania książek)
